@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小游戏</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <canvas id="game" width="600" height="600" style="display: block;
+    border: 3px solid #333;
+    background: #fff;"></canvas>
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        let paddleX = 250;
+        const paddleWidth = 90;
+        const paddleHeight = 10;
+        let ballX = 240, ballY = 150, dx = 1, dy = -1;
+        let score = 0;
+        // 游戏状态：0-未开始，1-进行中，2-结束
+        let gameState = 0;
+        const ballImage = new Image();
+        ballImage.src = '牢大.jpg'; // 确保有一个名为ball
+        const bricks = [];
+        for (let i = 0; i < 5; i++) {
+            bricks.push({ x: i * 80, y: 50, h: 20, hit: false });
+        }
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            paddleX = e.clientX - rect.left - paddleWidth / 2;
+            if (paddleX < 0) paddleX = 0;
+            if (paddleX + paddleWidth > 600) paddleX = 600 - paddleWidth;
+        });
+        // 点击开始游戏/重新开始
+        canvas.addEventListener('click', () => {
+            if (gameState === 0 || gameState === 2) {
+                startGame();
+            }
+        });
+        
+        function startGame() {
+            gameState = 1;
+            ballX = 240;
+            ballY = 160;
+            dx = 1 * (Math.random() > 0.5 ? 1 : -1);
+            dy = -1;
+            score = 0;
+            bricks.forEach(b => b.hit = false);
+        }
+
+        function draw(){
+            ctx.fillStyle = '#ffffff';
+            ctx.clearRect(0, 0, 600, 600);
+            //开始界面
+            if (gameState === 0) {
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('别让牢大坠机', 300, 120);
+            
+            ctx.font = '20px Arial';
+            ctx.fillText('使用鼠标控制球拍', 300, 160);
+
+            ctx.fillStyle = '#27ae60';
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText('点击开始', 300, 220);
+
+            requestAnimationFrame(draw);
+            return;
+            }
+            // 结束界面
+            if (gameState === 2) {
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('游戏结束', 300, 100);
+
+                ctx.font = 'bold 28px Arial';
+                ctx.fillText('最终得分: ' + score, 300, 150);
+
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText('点击重新开始', 300, 210);
+                requestAnimationFrame(draw);
+                return;
+            }
+            // 游戏进行中
+        // 画砖块
+        ctx.fillStyle = '#444';
+        bricks.forEach(b => {
+            if (!b.hit) ctx.fillRect(b.x, b.y, b.w, b.h);
+        });
+        // 画球
+        if (ballImage.complete) {
+            ctx.drawImage(ballImage, ballX - 32, ballY - 32, 64, 64);
+        }
+  
+        // 画球拍
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(paddleX, 300, paddleWidth, paddleHeight);
+  
+        // 球运动
+        ballX += dx;
+        ballY += dy;
+  
+        // 碰壁反弹
+        if (ballX <= 8 || ballX >= 580) dx = -dx;
+        if (ballY <= 8) dy = -dy;
+        // 碰砖块
+        bricks.forEach(b => {
+            if (!b.hit && ballX >= b.x && ballX <= b.x + b.w && 
+                ballY >= b.y && ballY <= b.y + b.h) {
+            b.hit = true;
+            dy = -dy;
+        }
+    });
+  
+        // 碰到底部游戏结束
+        if (ballY >= 330) {
+            gameState = 2;
+        }
+  
+        // 球拍碰撞
+        if (ballY >= 300 && ballY < 310 && ballX >= paddleX && ballX <= paddleX + paddleWidth) {
+            dy = -dy;
+            score++;
+        }
+        // 显示分数
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText('分数: ' + score, 590, 30);
+        requestAnimationFrame(draw);
+        }
+        ballImage.onload = () => { draw(); };
+        if (ballImage.complete) { draw(); }
+    </script>
+</body>
+</html>
